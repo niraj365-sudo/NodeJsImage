@@ -1,86 +1,40 @@
 const express = require('express')
 const ejs = require('ejs')
 const path = require('path')
-const multer = require('multer')
+const uploadRoute = require('./router/upload')
+const dotenv = require('dotenv')
+const mongoose = require('mongoose')
+const cloudinary = require('cloudinary')
+dotenv.config()
 
-//Set Storage
-const storage = multer.diskStorage({
-    destination: './public/upload',
-    filename: (req, file, cb)=>{
-        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
-    }
-})
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_ID,
+  api_secret: process.env.API_SECRET,
+});
+console.log('This is API ID',process.env.API_ID);
 
-//Init upload
-const upload = multer({
-    storage: storage,
-    limits: {fileSize: 10000000},
-    fileFilter: (req, file, cb)=>{
-        checkFileType(file, cb)
-        
-    }
-}).single('myImage')
+//Database connection
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 
-//Check File Type
+}).then(()=>console.log("Connected to database.")).catch(err => console.log(err))
 
-function checkFileType(file, cb){
-    //Allowed extensions
-    filetypes = /jpeg|jpg|png/
-    //Check extension
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase())
-    //Check mimetype
-    const mimetype = filetypes.test(file.mimetype)
 
-    if(mimetype && extname){
-        return cb(null, true)
-    }
-    else{
-        return cb("Error: Only images")
-    }
-}
 
 //Init app
 const app = express()
-
-
 
 //EJS
 app.set("view engine", "ejs")
 
 //Public Folder
 app.use(express.static("./public"))
+app.use('/', uploadRoute)
 
-//Welcome route
-app.get('/',(req, res)=>{
-    res.render('index')
-})
 
-//Upload POST
-app.post('/upload',(req, res)=>{
-    upload(req, res , (err)=>{
-       if (err) {
-            res.render('index',{
-                msg: err
-            }) 
-       } else {
-            console.log(req.file);
-            if(req.file == undefined){
-                res.render('index',{
-                    msg: "Error: Please insert a file"
-            })
-        }
-        else{
-            res.render('index',{
-                msg: "File Uploaded",
-                file: `uploads/${req.file.filename}`
-            })
-        }
-       }
-        
-    })
-})
-
-const PORT = 9090
+const PORT = process.env.PORT 
 
 app.listen(PORT, ()=>{
     console.log(`Connected to Port ${PORT}`);
