@@ -7,12 +7,7 @@ const mongoose = require('mongoose')
 const cloudinary = require('cloudinary')
 dotenv.config()
 
-cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.API_ID,
-  api_secret: process.env.API_SECRET,
-});
-console.log('This is API ID',process.env.API_ID);
+
 
 //Database connection
 mongoose.connect(process.env.MONGO_URI, {
@@ -21,7 +16,12 @@ mongoose.connect(process.env.MONGO_URI, {
 
 }).then(()=>console.log("Connected to database.")).catch(err => console.log(err))
 
-
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_ID,
+  api_secret: process.env.API_SECRET,
+});
+console.log('This is API ID',process.env.API_ID);
 
 //Init app
 const app = express()
